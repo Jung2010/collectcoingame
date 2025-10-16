@@ -104,22 +104,30 @@
             width: 100%;
         }
     }
+
+    #header {
+        position: sticky;
+        box-shadow: 0px 0px 10px 0px skyblue;
+        top: 0;
+    }
 </style>
 
 <main>
-    <p id='ownedMoney'>
-        <p>You have</p>
-        <p id="appearMoney">
-            <span id='moneyDisplay'>0</span> coins
+    <div id="header">
+        <p id='ownedMoney'>
+            <p>You have</p>
+            <p id="appearMoney">
+                <span id='moneyDisplay'>0</span> coins
+            </p>
         </p>
-    </p>
-    <p>
-        Your Play Time :
-        <span id='playedTime'>...</span>
-    </p>
-    <p>
-        <button id='stopBtn'>STOP BTN</button>
-    </p>
+        <p>
+            Your Play Time :
+            <span id='playedTime'>...</span>
+        </p>
+        <p>
+            <button id='stopBtn'>STOP BTN</button>
+        </p>
+    </div>
     <div id='thingTable'></div>
 </main>
 
