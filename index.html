@@ -58,7 +58,7 @@
     card {
         display: block;
         float: left;
-        width: 350px;
+        width: 500px;
         background: beige;
         margin: 20px;
         border-radius: 10px;
@@ -72,7 +72,7 @@
     }
     #priceGraph {
         background:skyblue;
-        border-radius: 15px;
+        border-radius: 15px 15px 0px 0px;
         width: 100%;
         height: 200px;
         background: linear-gradient(white,royalblue);
@@ -106,9 +106,15 @@
     }
 
     #header {
-        position: sticky;
-        box-shadow: 0px 0px 10px 0px skyblue;
+        padding: 30px;
+        box-shadow: 0px 0px 10px 0px lightgray;
+        background: rgb(250,250,250);
         top: 0;
+    }
+
+    .number {
+        font-family: consolas;
+        font-weight: 900;
     }
 </style>
 
@@ -139,64 +145,83 @@ let stopped = false;
     let coins = 1000;
     const things = [
         {
+            name: '경제지표',
+            price: 0,
+            maxCh: 0, // 최대 변동률
+            rise: 0, // 오를 확률
+            owning: 0, // 소유중
+            changed: "", // 얼마나 변동 되었는지
+            risingTerm: false, // 상승세인가
+            fallingTerm: false, // 하락세인가
+            cutline: Infinity // 최대가격
+        },
+        {
             name: 'Gold',
             price: 100,
-            maxCh: 0.2, // 최대 변동률
+            maxCh: 0.05, // 최대 변동률
             rise: 0.5, // 오를 확률
             owning: 0, // 소유중
             changed: "", // 얼마나 변동 되었는지
             risingTerm: true, // 상승세인가
-            fallingTerm: false // 하락세인가
+            fallingTerm: false, // 하락세인가
+            rtPossibility : 0.2, // 상승세 확률
+            ftPossibility : 0.1, // 하락세 확률
+            cutline: 1500 // 최대가격
         },
         {
             name: 'Silver',
             price: 50,
+            maxCh: 0.025,
+            rise: 0.5,
+            owning: 0,
+            changed: "",
+            risingTerm: true,
+            fallingTerm: false,
+            cutline: 300
+        },
+        {
+            name: 'Coin',
+            price: 20,
             maxCh: 0.1,
             rise: 0.5,
             owning: 0,
             changed: "",
             risingTerm: true,
-            fallingTerm: false
-        },
-        {
-            name: 'Coin',
-            price: 20,
-            maxCh: 0.6,
-            rise: 0.5,
-            owning: 0,
-            changed: "",
-            risingTerm: true,
-            fallingTerm: false
+            fallingTerm: false,
+            cutline: 10000000
         },
         {
             name: 'Stock',
             price: 500,
-            maxCh: 0.2,
-            rise: 0.5,
+            maxCh: 0.05,
+            rise: 0.52,
             owning: 0,
             changed: "",
             risingTerm: false,
-            fallingTerm: false
+            fallingTerm: false,
+            cutline: 2000
         },
         {
             name: 'Apartment',
             price: 1000000,
-            maxCh: 0.08,
-            rise: 0.55,
+            maxCh: 0.07,
+            rise: 0.58,
             owning: 0,
             changed: "",
             risingTerm: false,
-            fallingTerm: false
+            fallingTerm: false,
+            cutline: 30000000
         },
         {
             name: 'Hotel',
             price: 5000000,
-            maxCh: 0.05,
+            maxCh: 0.02,
             rise: 0.6,
             owning: 0,
             changed: "",
             risingTerm: false,
-            fallingTerm: false
+            fallingTerm: false,
+            cutline: 40000000
         }
     ];
     let playedTime = 0;
@@ -216,13 +241,23 @@ let stopped = false;
             dats.owning-=n;
         }
     }
-    const changingTime = 100;
+    const changingTime = 1000; // 틱
 
     const $coinDisplay = $('#moneyDisplay');
     setInterval(()=>{ // 디스플레이
-        $coinDisplay.innerHTML = coins;
+        $coinDisplay.innerHTML = coins.toFixed(2);
     });
     
+    document.body.addEventListener('keydown',e=>{
+        if(e.key==="S") {
+            if(stopped) stopBtn.onclick=(()=>{
+                stopped=false;
+                changePrice();
+            });
+            else stopBtn.onclick=(()=>{stopped=true;});
+        }
+    });
+
     (function changePrice(){ // 가격 변동
         stopBtn.innerHTML=stopped?"진행하기":"멈추기";
         if(stopped) stopBtn.onclick=(()=>{
@@ -243,27 +278,30 @@ let stopped = false;
         for(let i = 0; i < things.length;i++){
             const th = things[i]; // 선택된 물건
             let changing = Math.random()*th.maxCh; // 변동률
-            const ifRise = Math.random()<=( th.rise*( th.risingTerm? 1.4: (th.fallingTerm?0.7:1) ) ); // 오를지?
-            if(!ifRise&&changing>0.3&&th.risingTerm) changing=0.3; // 상승세라면 최대하락은 30%
-            if(ifRise&&changing>0.3&&th.fallingTerm) changing=0.4; // 하락세라면 최대상승은 40%
-            const thPrice = Math.round((ifRise?1:-1)*(changing)*th.price+th.price); // 가격책정
+            const ifRise = Math.random()<=( th.rise*( th.risingTerm? 0.75: (th.fallingTerm?0.25:0.5) ) ); // 오를지?
+            if(ifRise&&th.risingTerm) changing+=0.1; // 상승세&상승라면 변동 +10%p
+            if(!ifRise&&th.fallingTerm) changing+=0.09; // 하락세&&하락라면 변동 +9%p
+            const thPrice = ((ifRise?1:-1)*(changing)*th.price+th.price); // 가격책정
             const changed = (ifRise?"+":"-")+(changing*100).toFixed(2); // 변동률(문자열%)
-            if(Math.random()<0.1){ // 10%의 확률로 상승세 끝
+            if(Math.random()<(th.rtPossibility||0.05)&&th.risingTerm&&!th.fallingTerm){ // 5%의 확률로 상승세 끝
                 th.risingTerm=false;
-            } else {
-                if(Math.random()>0.85) { // 15%의 확률로 상승세 시작
-                    th.risingTerm=true;
-                }
             }
-            if(Math.random()<0.15&&th.fallingTerm){ // 15%의 확률로 하락세 끝
+            if(Math.random()<(
+                th.price<th.cutline?0.06:0.05
+            )) { // 6%의 확률로 상승세 시작, 단 가격이 커트라인보다 높으면 5퍼센트
+                th.risingTerm=true;
+            }
+            if(Math.random()<(th.ftPossibility||0.05)&&th.fallingTerm){ // 5%의 확률로 하락세 끝
                 th.fallingTerm=false;
-            } else {
-                if(Math.random()<0.05) { // 5%의 확률로 하락세 시작
-                    th.fallingTerm=true;
-                }
             }
+            if(Math.random()<(
+                th.price<th.cutline?0.07:0.12
+            )) { // 7%의 확률로 하락세 시작, 단 가격이 커트라인보다 높으면 12퍼센트
+                th.fallingTerm=true;
+            }
+            console.log(`NM:${th.name} RT:${th.risingTerm} FT:${th.fallingTerm}`);
             th.price = thPrice;
-            if(thPrice<10)th.price=10;
+            th.price=th.price<50?50:th.price;
             th.changed = changed;
             /*
             document.write(`
@@ -274,6 +312,12 @@ let stopped = false;
             </span>
             `);
             */
+
+            if(th.name==="경제지표") {
+                th.price = things.reduce((pre,cur)=>pre+(cur.name==="경제지표"?0:cur.price),0)/things.length;
+            }
+
+            if(th.risingTerm===th.fallingTerm) th.fallingTerm=false;
         }
         const copy = (obj) => {
             if(typeof obj !== "object" || obj === null){
@@ -306,20 +350,22 @@ let stopped = false;
                             '
                             >${cur.name}</h2>
                             
-                            <button class='dealBtn' id='buyBtn' style='
-                            margin-left: 0px;
-                            '>구매</button>
-                            <button class='dealBtn' id='sellBtn'>판매</button>
-                            <button class='dealBtn' id='allSellBtn'>전부 판매</button>
+                            <p ${cur.name==="경제지표"?"style='visibility:hidden'":""}>
+                                <button class='dealBtn' id='buyBtn' style='
+                                margin-left: 0px;
+                                '>구매</button>
+                                <button class='dealBtn' id='sellBtn'>판매</button>
+                                <button class='dealBtn' id='allSellBtn'>전부 판매</button>
+                            </p>
                         </p>
 
-                        <span style='
+                        <span class='number' style='
                         color: darkblue;
-                        '>🪙 ${cur.price}</span>
-                        ( <span style='
+                        '>🪙 ${(cur.price).toFixed(2)}</span>
+                        ( <span class="number" style='
                             color:${cur.changed[0]==="-"?"royalblue":"red"};
                         '>${cur.changed}</span>% )<br>
-                        💰 <span style='color:darkblue;'>${Math.floor(coins/cur.price)}</span>개 구매가능
+                        💰 <span style='color:darkblue;' class="number">${Math.floor(coins/cur.price)}</span>개 구매가능
                         
                         <br>
 
@@ -345,8 +391,9 @@ let stopped = false;
         for(let i = 0; i < things.length; i++) {
             
             (()=>{
+                const mark = 100; // 표시 범위
                 const datas = thingDatas;
-                const until = thingDatas.length>150?150:thingDatas.length;
+                const until = thingDatas.length>mark?mark:thingDatas.length;
                 const arr = [];
                 for(let j = thingDatas.length; j > thingDatas.length-until; j--) {
                     arr.push(thingDatas[j-1]?.[i]?.price??0);
