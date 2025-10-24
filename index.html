@@ -260,18 +260,18 @@ let stopped = false;
         
         return deepCopyObj;
     }
+
     let things = [
         {
             name: '경제지표',
             eng_name: 'Economic Indicator',
             price: 0,
-            maxCh: 0, // 최대 변동률
-            rise: 0, // 오를 확률
-            owning: 0, // 소유중
-            changed: "", // 얼마나 변동 되었는지
-            risingTerm: false, // 상승세인가
-            fallingTerm: false, // 하락세인가
-            cutline: Infinity // 최대가격
+            maxCh: 0,
+            rise: 0,
+            owning: 0,
+            risingTerm: false, 
+            fallingTerm: false, 
+            cutline: Infinity
         },
         {
             name: '금',
@@ -280,12 +280,9 @@ let stopped = false;
             maxCh: 0.05, // 최대 변동률
             rise: 0.5, // 오를 확률
             owning: 0, // 소유중
-            changed: "", // 얼마나 변동 되었는지
             risingTerm: true, // 상승세인가
             fallingTerm: false, // 하락세인가
-            rtPossibility : 0.2, // 상승세 확률
-            ftPossibility : 0.1, // 하락세 확률
-            cutline: 15000 // 최대가격
+            cutline: 15000, // 최대가격
         },
         {
             name: '은',
@@ -294,7 +291,6 @@ let stopped = false;
             maxCh: 0.025,
             rise: 0.5,
             owning: 0,
-            changed: "",
             risingTerm: true,
             fallingTerm: false,
             cutline: 3000
@@ -306,7 +302,6 @@ let stopped = false;
             maxCh: 0.1,
             rise: 0.5,
             owning: 0,
-            changed: "",
             risingTerm: true,
             fallingTerm: false,
             cutline: 1000000
@@ -318,7 +313,6 @@ let stopped = false;
             maxCh: 0.05,
             rise: 0.52,
             owning: 0,
-            changed: "",
             risingTerm: false,
             fallingTerm: false,
             cutline: 20000
@@ -330,7 +324,6 @@ let stopped = false;
             maxCh: 0.07,
             rise: 0.58,
             owning: 0,
-            changed: "",
             risingTerm: false,
             fallingTerm: false,
             cutline: 300000000
@@ -342,7 +335,6 @@ let stopped = false;
             maxCh: 0.02,
             rise: 0.6,
             owning: 0,
-            changed: "",
             risingTerm: false,
             fallingTerm: false,
             cutline: 400000000
@@ -390,7 +382,7 @@ let stopped = false;
             `;
         }
     }
-    const changingTime = 1000; // 틱
+    const changingTime = 500; // 틱
 
     const $coinDisplay = $('#moneyDisplay');
     setInterval(()=>{ // 디스플레이
@@ -405,7 +397,9 @@ let stopped = false;
             stopped=false;
             changePrice();
         });
-        else stopBtn.onclick=(()=>{stopped=true;});
+        else stopBtn.onclick=(()=>{
+            stopped=true;
+        });
 
         playedTime++;
         const allWealth = coins+things.reduce( (pre,cur)=>pre+cur.price*cur.owning,0 );
@@ -423,22 +417,38 @@ let stopped = false;
             if(ifRise&&th.risingTerm) changing+=0.1; // 상승세&상승라면 변동 +10%p
             if(!ifRise&&th.fallingTerm) changing+=0.09; // 하락세&&하락라면 변동 +9%p
             const thPrice = ((ifRise?1:-1)*(changing)*th.price+th.price); // 가격책정
+            if(th.name==="경제지표") {
+               th.price = things.reduce((pre,cur)=>pre+(cur.name==="경제지표"?0:cur.price),0)/things.length;
+            }
             const changed = (ifRise?"+":"-")+(changing*100).toFixed(2); // 변동률(문자열%)
-            if(Math.random()<(th.rtPossibility||0.05)&&th.risingTerm&&!th.fallingTerm){ // 5%의 확률로 상승세 끝
+
+            th.kept=th.kept??0;
+
+            const start_rt = 0.06;
+            const start_ft = 0.07;
+
+            const end_rt = 0.05; // 상승세 끝날 확률
+            const end_ft = 0.05; // 하락세 끝날 확률
+
+            if(Math.random()<(end_rt)&&th.risingTerm&&!th.fallingTerm){ // 상승세 끝
                 th.risingTerm=false;
+                th.kept = 0;
             }
             if(Math.random()<(
-                th.price<th.cutline?0.06:0.05
+                th.price<th.cutline?start_rt:0.05
             )) { // 6%의 확률로 상승세 시작, 단 가격이 커트라인보다 높으면 5퍼센트
                 th.risingTerm=true;
+                th.kept++;
             }
-            if(Math.random()<(th.ftPossibility||0.05)&&th.fallingTerm){ // 5%의 확률로 하락세 끝
+            if(Math.random()<(end_ft)&&th.fallingTerm){ // 5%의 확률로 하락세 끝
                 th.fallingTerm=false;
+                th.kept=0;
             }
             if(Math.random()<(
-                th.price<th.cutline?0.07:0.12
+                th.price<th.cutline?start_ft:0.12
             )) { // 7%의 확률로 하락세 시작, 단 가격이 커트라인보다 높으면 12퍼센트
                 th.fallingTerm=true;
+                th.kept++;
             }
             // console.log(`NM:${th.name} RT:${th.risingTerm} FT:${th.fallingTerm}`);
             th.price = thPrice;
@@ -452,15 +462,11 @@ let stopped = false;
             </span>
             `);
             */
-           
-           if(th.name==="경제지표") {
-               th.price = things.reduce((pre,cur)=>pre+(cur.name==="경제지표"?0:cur.price),0)/things.length;
-            }
             
             if(th.risingTerm===th.fallingTerm) th.fallingTerm=false;
             
             if(th.price <= 50) {
-                console.log(copy(specimenTh[i]));
+                // console.log(copy(specimenTh[i]));
                 things[i] = copy(specimenTh[i]);
             }
         }
@@ -469,6 +475,7 @@ let stopped = false;
         $thingTable.innerHTML=`
         
             ${things.reduce((html,cur,index)=>{
+                if(!cur.changed) cur.changed="0%";
                 return html+`
                 <card>        
                     
@@ -529,16 +536,20 @@ let stopped = false;
                 const datas = thingDatas;
                 const until = thingDatas.length>mark?mark:thingDatas.length;
                 const arr = [];
+
                 for(let j = thingDatas.length; j > thingDatas.length-until; j--) {
                     arr.push(thingDatas[j-1]?.[i]?.price??0);
                 }
+
+                thingDatas.splice(0,thingDatas-mark);
+
                 const gf = priceGraphs[i];
                 const ctx = gf.getContext("2d");
                 const w = gf.width;
                 const h = gf.height;
                 const maxH = h/Math.max(...arr);
                 ctx.strokeStyle='darkblue';
-                for(let n = 1; n < arr.length+1; n++) {
+                for(let n = 1; n < arr.length; n++) {
                     const x = w-n*(w/arr.length);
                     const y = h-arr[n-2]*maxH*0.8;
                     if(n===1) ctx.moveTo(x,y);
@@ -569,8 +580,10 @@ let stopped = false;
             })()));
             document.body.onkeydown = e=>{
                 if(e.key==="S") {
-                    stopBtn.onclick=(()=>{stopped=true;});
-                    stopped=true;
+                    if(!stopped) {
+                        stopBtn.onclick=(()=>{stopped=true;});
+                        stopped=true;
+                    }
                 }
             };
         }
@@ -585,9 +598,11 @@ let stopped = false;
         localStorage.setItem("DATAS",savingData);
         
         $("#ini_btn").onclick=()=>{
-            localStorage.clear();
-            stopped=true;
-            location.reload();
+            if(!stopped){$stopBtn.onclick();}
+            setTimeout(()=>{
+                localStorage.clear();
+                location.reload();
+            },changingTime+100);
         };
         if(!stopped) setTimeout(changePrice,changingTime);
         
