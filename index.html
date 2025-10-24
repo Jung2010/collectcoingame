@@ -15,6 +15,9 @@
         transition: all 0.2s;
         font-family: 'LINESeedKR-Bd';
     }
+    body {
+        background: rgba(0,0,255,0.1);
+    }
     main {
         padding: 40px;
     }
@@ -58,36 +61,45 @@
     card {
         display: block;
         float: left;
-        width: 500px;
+        width: 400px;
         background: beige;
         margin: 20px;
         border-radius: 10px;
         padding: 0px;
         background: none;
         transition: all 0s;
+        border: 4px solid lightgray;
+        background: white;
     }
     card:hover {
         background: white;
-        box-shadow: 0px 0px 5px 0px royalblue;
+        /*box-shadow: 0px 0px 5px 0px royalblue;*/
+        border-color: royalblue;
     }
     #priceGraph {
         background:skyblue;
-        border-radius: 15px 15px 0px 0px;
+        border-radius: 10px 10px 0px 0px;
         width: 100%;
         height: 200px;
         background: linear-gradient(white,royalblue);
+        border-bottom: 4px solid lightgray;
     }
-    #stopBtn {
-        width: 300px;
+    .header_btn {
         padding: 6px;
         font-size: 18px;
         background: aliceblue;
         border-radius: 5px;
         border: 2px solid lightgray;
         transition: all 0.2s;
+        float: right;
+        margin-left: 10px;
     }
-    #stopBtn:hover {
-        background: lightgray;
+    .header_btn:hover {
+        background: white;
+        transform: rotate(10deg) scale(110%);
+    }
+    .header_btn:active {
+        transform: rotate(0deg);
     }
     @media screen and (max-width: 500px) {
         main { padding: 5px; }
@@ -106,46 +118,152 @@
     }
 
     #header {
+        position: fixed;
         padding: 30px;
         box-shadow: 0px 0px 10px 0px lightgray;
         background: rgb(250,250,250);
         top: 0;
+        left: 0;
+        right: 0;
+    }
+
+    #header p {
+        display: inline-block;
     }
 
     .number {
-        font-family: consolas;
+        font-family: 'Courier New', Courier, monospace;
         font-weight: 900;
+    }
+
+    #thingTable {
+        margin-top: 100px;
+        padding: 30px;
+    }
+
+    .dlg {
+        position: fixed;
+        width: 400px;
+        background: aliceblue;
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0px 0px 10px 0px gray;
+        animation: dlgOpen 0.5s;
+        top: 20%;
+        bottom: 50px;
+        height: auto;
+        padding: 20px;
+        overflow-y: auto;
+    }
+    .dlg h2 {
+        border-bottom: 3px solid gray;
+        padding: 10px;
+    }
+    @keyframes dlgOpen {
+        0%{
+            transform: scale(0%) translateY(-200px);
+        }
+    }
+
+    .closeBtn {
+        width: 20px;
+        height: 20px;
+        background: red;
+        border: none;
+        border-radius: 100%;
+        float: right;
+    }
+    .closeBtn:hover {
+        background: darkred;
+    }
+    form[method=dialog] {
+        display: inline;
+    }
+    #iptDlg {
+        top:auto;bottom:auto;
+    }
+    #dlg_ipt {
+        width: 100%;
+        border-radius: 10px 10px 0px 0px;
+        border: none;
+        outline: none;
+        padding: 10px;
+        font-size: 20px;
+    }
+    #dlg_ipt:hover {
+        background: lightgray;
+    }
+    #iptDlg button {
+        width: 100%;
+        border-radius: 0px 0px 10px 10px;
+        border: none;
+        background: royalblue;
+        color: white;
+        padding: 5px;
+        font-size: 15px;
+    }
+    #iptDlg h2 {
+        border: none;
+        text-align: center;
+        color: royalblue;
     }
 </style>
 
 <main>
     <div id="header">
-        <p id='ownedMoney'>
-            <p>You have</p>
-            <p id="appearMoney">
-                <span id='moneyDisplay'>0</span> coins
-            </p>
+        <p id="appearMoney">
+            🔥 <span id='moneyDisplay'>0</span> coins
         </p>
-        <p>
-            Your Play Time :
-            <span id='playedTime'>...</span>
-        </p>
-        <p>
-            <button id='stopBtn'>STOP BTN</button>
-        </p>
+        |
+        <span id='playedTime'>...</span>
+        <button id='stopBtn' class="header_btn" title="턴 멈추기/턴 계속하기">STOP BTN</button>
+        <button class="header_btn" title="기록보기" onclick="$('#logDlg').open=true;">📜</button>
+        <button class="header_btn" title="초기화하기" id="ini_btn">✈️</button>
     </div>
     <div id='thingTable'></div>
 </main>
+
+<dialog class="dlg" id="logDlg">
+    <h2>
+        LOG
+        <form method="dialog">
+            <button class="closeBtn"></button>
+        </form>
+    </h2>
+    <div id="logs"></div>
+</dialog>
+
+<dialog id="iptDlg" class="dlg">
+    <h2>LOREM IPSUM</h2>
+    <p>Lorem Ipsum Dolor Amet,</p>
+    <input id="dlg_ipt">
+    <button onclick="submit()">ENTER</button>
+</dialog>
 
 <script>
 const $ = v=>document.querySelector(v);
 const thingDatas = [];
 let stopped = false;
+
 (()=>{
     let coins = 1000;
-    const things = [
+    const copy = (obj) => {
+        if(typeof obj !== "object" || obj === null){
+            return obj;
+        }
+        
+        const deepCopyObj = {};
+        
+        for(let key in obj){
+            deepCopyObj[key] = copy(obj[key]);
+        }
+        
+        return deepCopyObj;
+    }
+    let things = [
         {
             name: '경제지표',
+            eng_name: 'Economic Indicator',
             price: 0,
             maxCh: 0, // 최대 변동률
             rise: 0, // 오를 확률
@@ -156,8 +274,9 @@ let stopped = false;
             cutline: Infinity // 최대가격
         },
         {
-            name: 'Gold',
-            price: 100,
+            name: '금',
+            eng_name: 'Gold',
+            price: 1000,
             maxCh: 0.05, // 최대 변동률
             rise: 0.5, // 오를 확률
             owning: 0, // 소유중
@@ -166,71 +285,95 @@ let stopped = false;
             fallingTerm: false, // 하락세인가
             rtPossibility : 0.2, // 상승세 확률
             ftPossibility : 0.1, // 하락세 확률
-            cutline: 1500 // 최대가격
+            cutline: 15000 // 최대가격
         },
         {
-            name: 'Silver',
-            price: 50,
+            name: '은',
+            eng_name: 'Silver',
+            price: 500,
             maxCh: 0.025,
             rise: 0.5,
             owning: 0,
             changed: "",
             risingTerm: true,
             fallingTerm: false,
-            cutline: 300
+            cutline: 3000
         },
         {
-            name: 'Coin',
-            price: 20,
+            name: '코인',
+            eng_name: 'Coin',
+            price: 200,
             maxCh: 0.1,
             rise: 0.5,
             owning: 0,
             changed: "",
             risingTerm: true,
             fallingTerm: false,
-            cutline: 10000000
+            cutline: 1000000
         },
         {
-            name: 'Stock',
-            price: 500,
+            name: '주식',
+            eng_name: 'Stock',
+            price: 5000,
             maxCh: 0.05,
             rise: 0.52,
             owning: 0,
             changed: "",
             risingTerm: false,
             fallingTerm: false,
-            cutline: 2000
+            cutline: 20000
         },
         {
-            name: 'Apartment',
-            price: 1000000,
+            name: '아파트',
+            eng_name: 'Apartment',
+            price: 10000000,
             maxCh: 0.07,
             rise: 0.58,
             owning: 0,
             changed: "",
             risingTerm: false,
             fallingTerm: false,
-            cutline: 30000000
+            cutline: 300000000
         },
         {
-            name: 'Hotel',
-            price: 5000000,
+            name: '호텔',
+            eng_name: 'Hotel',
+            price: 50000000,
             maxCh: 0.02,
             rise: 0.6,
             owning: 0,
             changed: "",
             risingTerm: false,
             fallingTerm: false,
-            cutline: 40000000
+            cutline: 400000000
         }
     ];
+    const specimenTh = copy(things);
     let playedTime = 0;
+    // 데이터 세팅 끝
+
+    //데이터가 있다면 불러오기:
+    const loaddats = localStorage.getItem("DATAS");
+    if(loaddats) {
+        const dats = JSON.parse(loaddats);
+        things = dats.env;
+        coins = dats.user.coin;
+        playedTime = dats.user.playtime;
+    }
+
+    const $logs = $("#logs");
     const buyThing = (i,n=1)=>{
         const dats = things[i];
         const price = dats.price;
         if(coins>=price*n) {
             coins-=price*n;
             dats.owning+=n;
+
+            $logs.innerHTML += `
+            <span style="color:red;">
+                ${dats.name} 구매 : ${n}개 ( - ${(price*n).toFixed(2)} 코인 )
+            </span><br>
+            `;
         }
     }
     const sellThing = (i,n=1)=>{
@@ -239,6 +382,12 @@ let stopped = false;
         if(dats.owning>=n) {
             coins+=price*n;
             dats.owning-=n;
+
+            $logs.innerHTML += `
+            <span style="color:royalblue;">
+                ${dats.name} 판매 : ${n}개 ( + ${(price*n).toFixed(2)} 코인 )
+            </span><br>
+            `;
         }
     }
     const changingTime = 1000; // 틱
@@ -247,19 +396,11 @@ let stopped = false;
     setInterval(()=>{ // 디스플레이
         $coinDisplay.innerHTML = coins.toFixed(2);
     });
-    
-    document.body.addEventListener('keydown',e=>{
-        if(e.key==="S") {
-            if(stopped) stopBtn.onclick=(()=>{
-                stopped=false;
-                changePrice();
-            });
-            else stopBtn.onclick=(()=>{stopped=true;});
-        }
-    });
+    const $stopBtn = $("#stopBtn");
 
     (function changePrice(){ // 가격 변동
-        stopBtn.innerHTML=stopped?"진행하기":"멈추기";
+        stopBtn.innerHTML=stopped?"🚗":"🚧";
+        stopBtn.title=stopped?"계속 진행하기":"멈추기";
         if(stopped) stopBtn.onclick=(()=>{
             stopped=false;
             changePrice();
@@ -299,9 +440,8 @@ let stopped = false;
             )) { // 7%의 확률로 하락세 시작, 단 가격이 커트라인보다 높으면 12퍼센트
                 th.fallingTerm=true;
             }
-            console.log(`NM:${th.name} RT:${th.risingTerm} FT:${th.fallingTerm}`);
+            // console.log(`NM:${th.name} RT:${th.risingTerm} FT:${th.fallingTerm}`);
             th.price = thPrice;
-            th.price=th.price<50?50:th.price;
             th.changed = changed;
             /*
             document.write(`
@@ -312,25 +452,17 @@ let stopped = false;
             </span>
             `);
             */
-
-            if(th.name==="경제지표") {
-                th.price = things.reduce((pre,cur)=>pre+(cur.name==="경제지표"?0:cur.price),0)/things.length;
+           
+           if(th.name==="경제지표") {
+               th.price = things.reduce((pre,cur)=>pre+(cur.name==="경제지표"?0:cur.price),0)/things.length;
             }
-
+            
             if(th.risingTerm===th.fallingTerm) th.fallingTerm=false;
-        }
-        const copy = (obj) => {
-            if(typeof obj !== "object" || obj === null){
-                return obj;
+            
+            if(th.price <= 50) {
+                console.log(copy(specimenTh[i]));
+                things[i] = copy(specimenTh[i]);
             }
-            
-            const deepCopyObj = {};
-            
-            for(let key in obj){
-                deepCopyObj[key] = copy(obj[key]);
-            }
-            
-            return deepCopyObj;
         }
         thingDatas.push(copy(things));
         const $thingTable = $("#thingTable");
@@ -347,8 +479,10 @@ let stopped = false;
                             <h2 style='
                             margin-bottom: 0;
                             padding-bottom: 0;
+                            display: inline-block;
                             '
                             >${cur.name}</h2>
+                            <small> | ${cur.eng_name}</small> <br>
                             
                             <p ${cur.name==="경제지표"?"style='visibility:hidden'":""}>
                                 <button class='dealBtn' id='buyBtn' style='
@@ -365,14 +499,14 @@ let stopped = false;
                         ( <span class="number" style='
                             color:${cur.changed[0]==="-"?"royalblue":"red"};
                         '>${cur.changed}</span>% )<br>
-                        💰 <span style='color:darkblue;' class="number">${Math.floor(coins/cur.price)}</span>개 구매가능
+                        💰 <span style='color:darkblue;'>${Math.floor(coins/cur.price)}</span>개 구매가능
                         
                         <br>
 
                         🛒 <span style='
                         color: darkblue;
                         '>${cur.owning}</span>개 소유중 (
-                            <span style='color:darkblue;'>${cur.owning*cur.price}</span>
+                            <span style='color:darkblue;' class="number">${(cur.owning*cur.price).toFixed(2)}</span>
                         coins )
                     </div>
                     
@@ -433,8 +567,30 @@ let stopped = false;
             allSellBtns[i].addEventListener('click',_=>sellThing(i,(()=>{
                 return things[i].owning;
             })()));
+            document.body.onkeydown = e=>{
+                if(e.key==="S") {
+                    stopBtn.onclick=(()=>{stopped=true;});
+                    stopped=true;
+                }
+            };
         }
+
+        const savingData = JSON.stringify({
+            env:things,
+            user:{
+                coin:coins,
+                playtime:playedTime
+            }
+        });
+        localStorage.setItem("DATAS",savingData);
+        
+        $("#ini_btn").onclick=()=>{
+            localStorage.clear();
+            stopped=true;
+            location.reload();
+        };
         if(!stopped) setTimeout(changePrice,changingTime);
+        
     })();
 })();
 </script>
