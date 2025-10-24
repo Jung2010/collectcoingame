@@ -234,8 +234,8 @@
 </dialog>
 
 <dialog id="iptDlg" class="dlg">
-    <h2>LOREM IPSUM</h2>
-    <p>Lorem Ipsum Dolor Amet,</p>
+    <h2 id="iptTitle">LOREM IPSUM</h2>
+    <p id="iptDesc">Lorem Ipsum Dolor Amet,</p>
     <input id="dlg_ipt">
     <button onclick="submit()">ENTER</button>
 </dialog>
@@ -244,6 +244,7 @@
 const $ = v=>document.querySelector(v);
 const thingDatas = [];
 let stopped = false;
+const version = "Alpha 0.9.5";
 
 (()=>{
     let coins = 1000;
