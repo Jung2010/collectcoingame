@@ -199,7 +199,7 @@
         border: none;
         background: royalblue;
         color: white;
-        padding: 5px;
+        padding: 7px;
         font-size: 15px;
     }
     #iptDlg h2 {
@@ -418,11 +418,8 @@ const version = "Alpha 0.9.5";
             if(ifRise&&th.risingTerm) changing+=0.1; // 상승세&상승라면 변동 +10%p
             if(!ifRise&&th.fallingTerm) changing+=0.09; // 하락세&&하락라면 변동 +9%p
             const thPrice = ((ifRise?1:-1)*(changing)*th.price+th.price); // 가격책정
-            if(th.name==="경제지표") {
-               th.price = things.reduce((pre,cur)=>pre+(cur.name==="경제지표"?0:cur.price),0)/things.length;
-            }
             const changed = (ifRise?"+":"-")+(changing*100).toFixed(2); // 변동률(문자열%)
-
+            
             th.kept=th.kept??0;
 
             const start_rt = 0.06;
@@ -454,6 +451,11 @@ const version = "Alpha 0.9.5";
             // console.log(`NM:${th.name} RT:${th.risingTerm} FT:${th.fallingTerm}`);
             th.price = thPrice;
             th.changed = changed;
+
+            if(th.name==="경제지표") {
+               th.price = things.reduce((pre,cur)=>pre+(cur.name==="경제지표"?0:cur.price),0)/things.length;
+            }
+
             /*
             document.write(`
             <span style='
@@ -463,12 +465,12 @@ const version = "Alpha 0.9.5";
             </span>
             `);
             */
-            
-            if(th.risingTerm===th.fallingTerm) th.fallingTerm=false;
-            
-            if(th.price <= 50) {
-                // console.log(copy(specimenTh[i]));
-                things[i] = copy(specimenTh[i]);
+           
+           if(th.risingTerm===th.fallingTerm) th.fallingTerm=false;
+           
+           if(th.price <= 50) {
+               // console.log(copy(specimenTh[i]));
+               things[i] = copy(specimenTh[i]);
             }
         }
         thingDatas.push(copy(things));
